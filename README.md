@@ -11,4 +11,4 @@ python multi_task.py --dataset1 dataset_ca_human_train --dataset2 dataset_ca_tra
 
 3.Generating model generalization
 
-python generalization.py --dataset dataset_en_opt-66b  --method mBERT  --epochs 25
+python model_generalization.py --dataset dataset_en_opt-66b  --method mBERT  --epochs 25
