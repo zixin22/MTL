@@ -357,6 +357,7 @@ def load_custom_dataset_task1(file_path):
     return data_new
 
 
+
 def load_identify_model_dataset(file_path):
     f = pd.read_csv(file_path)
     f = f.drop(columns=["language", "length", "source", "label"])
@@ -383,31 +384,6 @@ def load_identify_model_dataset(file_path):
         if data_partition not in ['train', 'test']:
             continue
         data_new[data_partition]['text'].append(f.iloc[i]['text'])
-        data_new[data_partition]['label'].append(f.iloc[i]['multi_label_encoded'])
-
-    return data_new
-
-def load_custom_dataset(file_path):
-    f = pd.read_csv(file_path)
-    f = f.drop(columns=["language", "length", "source", "label"])
-    f['multi_label_encoded'], unique_labels = pd.factorize(f['multi_label'])
-    # 打乱数据索引
-    f = f.sample(frac=1, random_state=0).reset_index(drop=True)
-    data_new = {
-        'train': {
-            'text': [],
-            'label': [],
-        },
-        'test': {
-            'text': [],
-            'label': [],
-        }
-    }
-    for i in tqdm.tqdm(range(len(f)), desc="Parsing data"):
-        data_partition = f.iloc[i]['split']
-        if data_partition not in ['train', 'test']:
-            continue
-        data_new[data_partition]['text'].append((f.iloc[i]['text']))
         data_new[data_partition]['label'].append(f.iloc[i]['multi_label_encoded'])
 
     return data_new

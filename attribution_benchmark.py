@@ -13,22 +13,22 @@ from methods.gptzero import run_gptzero_experiment
 from methods.metric_based import get_ll, get_rank, get_entropy, get_rank_GLTR, run_threshold_experiment, run_GLTR_experiment
 
 os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    # 保证每个操作都是确定性的
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
 
 if __name__ == '__main__':
-    # 在主函数开始时立即设置随机种子
+
     set_seed(42)
-    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default="Essay")
+    parser.add_argument('--task', type=str, choices=['task1', 'task2'], required=True, help="Specify 'task1' or 'task2'")
+    parser.add_argument('--dataset', type=str, required=True, help="Specify dataset name")
     parser.add_argument('--method', type=str, default="Log-Likelihood")
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=5)
@@ -38,7 +38,6 @@ if __name__ == '__main__':
     parser.add_argument('--cache_dir', type=str, default=".cache")
     parser.add_argument('--DEVICE', type=str, default="cuda")
 
-    # params for DetectGPT
     parser.add_argument('--pct_words_masked', type=float, default=0.3)
     parser.add_argument('--span_length', type=int, default=2)
     parser.add_argument('--n_perturbation_list', type=str, default="10")
@@ -56,28 +55,26 @@ if __name__ == '__main__':
     parser.add_argument('--random_fills', action='store_true')
     parser.add_argument('--random_fills_tokens', action='store_true')
 
-    # params for GPTZero
     parser.add_argument('--gptzero_key', type=str, default="")
 
     args = parser.parse_args()
-
     DEVICE = args.DEVICE
-
     START_DATE = datetime.datetime.now().strftime('%Y-%m-%d')
     START_TIME = datetime.datetime.now().strftime('%H-%M-%S-%f')
 
-    print(f'Loading dataset {args.dataset}...')
-    if args.dataset in ["WP", "ESSAY", "Reuters"]:
-        data = dataset_loader_attribution.load(args.dataset)
-    else:
-        file_path = f'/content/drive/MyDrive/MGTBench/multitude/{args.dataset}.csv'
-        data = dataset_loader_attribution.load_custom_dataset(file_path)
+    print(f'Loading dataset for {args.task} with dataset name: {args.dataset}...')
+
+    # 加载数据集
+    file_path = f'file_to_multitude/{args.dataset}.csv'
+    if args.task == "task1":
+        data = dataset_loader_attribution.load_custom_dataset_task1(file_path)
+    elif args.task == "task2":
+        data = dataset_loader_attribution.load_custom_dataset_task2(file_path)
 
     base_model_name = args.base_model_name.replace('/', '_')
-    if args.dataset in ["WP", "ESSAY", "Reuters"]:
-         SAVE_PATH = f'file_to_update_results/{base_model_name}-{args.mask_filling_model_name}/attribution_{args.dataset}'
-    else:
-        SAVE_PATH = f'file_to_update_results/{base_model_name}-{args.mask_filling_model_name}/attribution_{args.dataset}'
+
+    SAVE_PATH = f'file_to_update_results/{base_model_name}-{args.mask_filling_model_name}/attribution_{args.dataset}_{args.task}'
+
     if not os.path.exists(SAVE_PATH):
         os.makedirs(SAVE_PATH)
     print(f"Saving results to absolute path: {os.path.abspath(SAVE_PATH)}")
@@ -102,20 +99,25 @@ if __name__ == '__main__':
         args.base_model_name, cache_dir)
     load_base_model(base_model, DEVICE)
 
-    def ll_criterion(text): return get_ll(
-        text, base_model, base_tokenizer, DEVICE)
+    def ll_criterion(text):
+        return get_ll(
+            text, base_model, base_tokenizer, DEVICE)
 
-    def rank_criterion(text): return -get_rank(text,
-                                               base_model, base_tokenizer, DEVICE, log=False)
+    def rank_criterion(text):
+        return -get_rank(text,
+                         base_model, base_tokenizer, DEVICE, log=False)
 
-    def logrank_criterion(text): return -get_rank(text,
-                                                  base_model, base_tokenizer, DEVICE, log=True)
+    def logrank_criterion(text):
+        return -get_rank(text,
+                         base_model, base_tokenizer, DEVICE, log=True)
 
-    def entropy_criterion(text): return get_entropy(
-        text, base_model, base_tokenizer, DEVICE)
+    def entropy_criterion(text):
+        return get_entropy(
+            text, base_model, base_tokenizer, DEVICE)
 
-    def GLTR_criterion(text): return get_rank_GLTR(
-        text, base_model, base_tokenizer, DEVICE)
+    def GLTR_criterion(text):
+        return get_rank_GLTR(
+            text, base_model, base_tokenizer, DEVICE)
 
     outputs = []
 
@@ -144,7 +146,7 @@ if __name__ == '__main__':
                 num_labels=args.num_labels,
                 epochs=args.epochs,
                 save_path=SAVE_PATH +
-                f"/OpenAI-D-{args.epochs}"))
+                          f"/OpenAI-D-{args.epochs}"))
     elif args.method == "ConDA":
         outputs.append(
             run_supervised_experiment(
@@ -157,7 +159,7 @@ if __name__ == '__main__':
                 num_labels=args.num_labels,
                 epochs=args.epochs,
                 save_path=SAVE_PATH +
-                f"/ConDA-{args.epochs}"))
+                          f"/ConDA-{args.epochs}"))
     elif args.method == "ChatGPT-D":
         outputs.append(
             run_supervised_experiment(
@@ -171,7 +173,7 @@ if __name__ == '__main__':
                 num_labels=args.num_labels,
                 epochs=args.epochs,
                 save_path=SAVE_PATH +
-                f"/ChatGPT-D-{args.epochs}"))
+                          f"/ChatGPT-D-{args.epochs}"))
     elif args.method == "LM-D":
         outputs.append(
             run_supervised_experiment(
@@ -185,7 +187,7 @@ if __name__ == '__main__':
                 num_labels=args.num_labels,
                 epochs=args.epochs,
                 save_path=SAVE_PATH +
-                f"/LM-D-{args.epochs}"))
+                          f"/LM-D-{args.epochs}"))
     elif args.method == "gpt2":
         outputs.append(
             run_supervised_experiment(
@@ -198,8 +200,8 @@ if __name__ == '__main__':
                 finetune=True,
                 num_labels=args.num_labels,
                 epochs=args.epochs,
-                save_path=SAVE_PATH + 
-                f"/GPT2-D-{args.epochs}"))
+                save_path=SAVE_PATH +
+                          f"/GPT2-D-{args.epochs}"))
     elif args.method == "mBERT":
         outputs.append(
             run_supervised_experiment(
@@ -235,7 +237,7 @@ if __name__ == '__main__':
         outputs.append(run_perturbation_experiments(
             args, data, base_model, base_tokenizer, method="LRR"))
 
-    # run GPTZero: pleaze specify your gptzero_key in the args
+    # run GPTZero
     elif args.method == "GPTZero":
         outputs.append(run_gptzero_experiment(data, api_key=args.gptzero_key))
 
@@ -251,6 +253,7 @@ if __name__ == '__main__':
 
     # save results
     import pickle as pkl
+
     with open(os.path.join(SAVE_PATH, f"{args.method}_{args.epochs}_attribution_benchmark_results.pkl"), "wb") as f:
         pkl.dump(outputs, f)
 
@@ -260,6 +263,6 @@ if __name__ == '__main__':
     with open("logs/performance_attribution.csv", "a") as wf:
         for row in outputs:
             wf.write(
-                f"{args.dataset},{args.base_model_name},{args.method},{args.epochs},{json.dumps(row['general'])}\n")
+                f"{args.task},{args.dataset},{args.base_model_name},{args.method},{args.epochs},{json.dumps(row['general'])}\n")
 
     print("Finish")

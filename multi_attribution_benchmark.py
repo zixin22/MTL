@@ -72,11 +72,10 @@ if __name__ == '__main__':
     START_DATE = datetime.datetime.now().strftime('%Y-%m-%d')
     START_TIME = datetime.datetime.now().strftime('%H-%M-%S-%f')
 
-    current_dir = os.path.dirname(__file__)
     print(f'Loading dataset {args.dataset1}...')
-    file_path1 = os.path.join(current_dir, '../multitude', f'{args.dataset1}.csv')
+    file_path1 = os.path.join('file_to_multitude', f'{args.dataset1}.csv')
     print(f'Loading dataset {args.dataset2}...')
-    file_path2 = os.path.join(current_dir, '../multitude', f'{args.dataset2}.csv')
+    file_path2 = os.path.join('file_to_multitude', f'{args.dataset2}.csv')
 
     data_task1 = dataset_loader_attribution.load_custom_dataset_task1(file_path1)
     data_task2 = dataset_loader_attribution.load_custom_dataset_task2(file_path2)
