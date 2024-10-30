@@ -1,6 +1,6 @@
 import random
 
-# 英文字母到同形异义字的映射
+
 homoglyph_map = {
     'a': ['а', 'ᴀ', 'ɑ'],
     'b': ['Ь', 'ƅ', 'ɓ'],
@@ -34,9 +34,9 @@ def apply_homoglyph_attack(text, attack_rate=0.3):
     attacked_text = []
     for char in text:
         if char.lower() in homoglyph_map and random.random() < attack_rate:
-            # 随机选择一个同形异义字替换
+
             homoglyph = random.choice(homoglyph_map[char.lower()])
-            # 保持大小写
+
             attacked_text.append(homoglyph.upper() if char.isupper() else homoglyph)
         else:
             attacked_text.append(char)
