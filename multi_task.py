@@ -21,7 +21,6 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    # 保证每个操作都是确定性的
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
@@ -37,7 +36,8 @@ if __name__ == '__main__':
     parser.add_argument('--method', type=str, default="Log-Likelihood")
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=5)
-    parser.add_argument('--num_labels', type=int, default=5)
+    parser.add_argument('--num_labels_task1', type=int, required=True)
+    parser.add_argument('--num_labels_task2', type=int, required=True)
     parser.add_argument('--base_model_name', type=str, default="gpt2-medium")
     parser.add_argument('--mask_filling_model_name', type=str, default="t5-base")
     parser.add_argument('--cache_dir', type=str, default=".cache")
@@ -136,8 +136,8 @@ if __name__ == '__main__':
                 DEVICE=DEVICE,
                 pos_bit=1,
                 finetune=True,
-                num_labels_task1=2,
-                num_labels_task2=5,
+                num_labels_task1=args.num_labels_task1,
+                num_labels_task2=args.num_labels_task2,
                 epochs=args.epochs,
                 save_path=SAVE_PATH + f"/mBERT-{args.epochs}",
                 use_pcgrad=args.use_pcgrad
@@ -154,8 +154,8 @@ if __name__ == '__main__':
                 DEVICE=DEVICE,
                 pos_bit=1,
                 finetune=True,
-                num_labels_task1=2,
-                num_labels_task2=5,
+                num_labels_task1=args.num_labels_task1,
+                num_labels_task2=args.num_labels_task2,
                 epochs=args.epochs,
                 save_path=SAVE_PATH + f"/XLM-R-{args.epochs}",
                 use_pcgrad=args.use_pcgrad
